@@ -18,7 +18,7 @@ conn = pymysql.connect(host=Config.mysql_conf['host'],port=Config.mysql_conf['po
 
 def send_mail(sub,content):
 
-	to_list=["58254451@qq.com"] 
+	to_list=["58254451@qq.com","397211359@qq.com"] 
 	mail_host="smtp.163.com"  #设置服务器
 	mail_user="18600547032"    #用户名
 	mail_pass="Liuhao85310"   #口令 
