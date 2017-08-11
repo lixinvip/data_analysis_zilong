@@ -63,7 +63,7 @@ WHEN TIME>18000 AND TIME<=36000 THEN 11
 WHEN TIME>36000 AND TIME<=54000 THEN 12
 WHEN TIME>54000 AND TIME<=72000 THEN 13
 WHEN TIME>72000 AND TIME<=86400 THEN 14
-ELSE 15  END  AS  timegroup 
+  END  AS  timegroup 
 FROM  
 (SELECT  ad_id,LEFT(ad_click_time,10) AS clickday ,UNIX_TIMESTAMP(ad_action_time)-UNIX_TIMESTAMP(ad_click_time) AS TIME ,
 idfa,imei,mac,androidid
@@ -93,7 +93,7 @@ WHEN TIME>18000 AND TIME<=36000 THEN 11
 WHEN TIME>36000 AND TIME<=54000 THEN 12
 WHEN TIME>54000 AND TIME<=72000 THEN 13
 WHEN TIME>72000 AND TIME<=86400 THEN 14
-ELSE 15  END  AS  timegroup 
+  END  AS  timegroup 
 FROM  
 (SELECT  ad_id,LEFT(ad_click_time,10) AS clickday,UNIX_TIMESTAMP(ad_action_time)-UNIX_TIMESTAMP(ad_click_time) AS TIME ,
 idfa,imei,mac,androidid
@@ -105,7 +105,7 @@ FROM `ad_action_idfa`
 ) action_idfa_detail
 ) action_idfa_time ) action_idfa_timegroup 
 GROUP BY ad_id,clickday,timegroup ) tempactiontime
-WHERE timegroup IN (12,13,14,15)
+WHERE timegroup IN (12,13,14)
 GROUP BY ad_id,clickday	
 ) d
 ON c.clickday = d.clickday AND c.ad_id=d.ad_id
@@ -154,11 +154,39 @@ and b.c>10;
 
 	conn.commit()	
 
-	sql='insert into `anti_spam_all` (game_id,platform,game_channel,agent,date,spam_11) select game_id,platform,game_channel,agent,date,case when device_count/device_all_count>0.8 then 2 when device_count/device_all_count>0.5 then 1 else 0 end from anti_spam_11_v0 where date=left(date_sub(curdate(),interval 1 day),10)'
+	sql="""
 
+UPDATE anti_spam_all a,(
+select game_id,platform,game_channel,agent,date,max(T) as spam_11 from (
+ select game_id,platform,game_channel,agent,date,case when device_count/device_all_count>0.8 then 2 when device_count/device_all_count>0.5 then 1 else 0 end as T from anti_spam_11_v0 where date=left(date_sub(curdate(),interval 1 day),10)
+ ) a group by game_id,platform,game_channel,agent,date ) b 
+  set a.spam_11=b.spam_11 
+  
+  where a.game_channel=b.game_channel AND a.agent=b.agent AND a.date=b.date and a.game_id=b.game_id and a.`platform`=b.platform
+ 
+ 
+ """
 	cur_1.execute(sql)
 	cur_1.close()
 	conn.commit()		
 
+def anti_spam_init():
+	global conn
+	cur_1=conn.cursor()
+	# 用11作为最初维度，假设它是最全的
+	sql="""
+
+
+
+delete from `anti_spam_all` where date = left(date_sub(curdate(),interval 1 day),10);
+insert into `anti_spam_all` (game_id,platform,DATE,game_channel,agent) select game_id,platform,DATE,game_channel,agent  from `ad_action_v2` where date=left(date_sub(curdate(),interval 1 day),10) group by game_id,platform,DATE,game_channel,agent
+"""
+
+
+	cur_1.execute(sql)
+	cur_1.close()
+	conn.commit()	
+
+ 	
 if __name__ == '__main__':
 	anti_spam_11()

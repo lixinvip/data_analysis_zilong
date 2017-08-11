@@ -18,7 +18,7 @@ conn = pymysql.connect(host=Config.mysql_conf['host'],port=Config.mysql_conf['po
 
 def send_mail(sub,content):
 
-	to_list=["58254451@qq.com","397211359@qq.com"] 
+	to_list=["58254451@qq.com","397211359@qq.com",'liuhao@zlongame.com','lixin@zlongame.com'] 
 	mail_host="smtp.163.com"  #设置服务器
 	mail_user="18600547032"    #用户名
 	mail_pass="Liuhao85310"   #口令 
@@ -52,25 +52,42 @@ def create_json(word,name):
 def anti_spam():
 	global conn
 	cursor=conn.cursor()
-	sql='select game_channel,agent,date,spam_1 from `anti_spam_all` where date = left(date_sub(curdate(),interval 1 day),10) and (spam_1<>0 or spam_11<>0)'
+	sql='select game_channel,agent,date,spam_1,spam_11 from `anti_spam_all` where date = left(date_sub(curdate(),interval 1 day),10) and (spam_1<>0 or spam_11<>0)'
 	cursor.execute(sql)
 	mail_str="""
 
+<div>hi all</div><div>&nbsp; &nbsp;</div><div>&nbsp; &nbsp; &nbsp;如下是今日可能存在异常的投放，请关注--</div><div><br></div><div><br></div><div><includetail>
 
-<table cellpadding="0" style="border-collapse:collapse;border-color:#666666;border-width:1.0px;border-style:solid;width:364.0px;">
- <colgroup><col style="width:111.0px;"> <col style="width:72.0px;"> <col span="2" style="width:83.0px;"> </colgroup>
+
+<table cellpadding="0" style="border-collapse:collapse;border-color:#666666;border-width:1.0px;border-style:solid;">
+ 
 <tbody>
 <tr height="24"> 
  <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">渠道</td>
   <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">代理商</td>
   <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">投放日期</td> 
- <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">作弊行为1</td>
+ <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">设备类型异常</td>
+ <td class="xl67 " valign="middle" style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#ffffff;font-size:16.0px;font-weight:bold;font-style:normal;text-decoration:none solid #ffffff;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;background-color:#000000;">激活时间异常</td>
  </tr>
 
 	"""	
 	rs=cursor.fetchall()
 
 	for r in rs:
+
+		if str(r[3])=="2":
+			temp_str1='<font color="#ffffff" style="background-color: rgb(255, 0, 0);">严重可疑</font>'
+		elif str(r[3])=="1":
+			temp_str1='<font color="#ff6600">轻度异常</font>'
+		else: 
+			temp_str1='正常'
+		if str(r[4])=="2":
+			temp_str2='<font color="#ffffff" style="background-color: rgb(255, 0, 0);">严重可疑</font>'
+		elif str(r[4])=="1":
+			temp_str2='<font color="#ff6600">轻度异常</font>'
+		else:
+			temp_str2='正常'
+
 		mail_str+=""" <tr height="22"> 
 		<td class="xl65 "  valign="middle"style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#000000;font-size:13.3px;font-weight:normal;font-style:normal;text-decoration:none solid #000000;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;">
 		""" +str(r[0])+"""
@@ -85,14 +102,20 @@ def anti_spam():
 </td> 
 <td class="xl65 " valign="middle"  style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#000000;font-size:13.3px;font-weight:normal;font-style:normal;text-decoration:none solid #000000;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;">
  
-        """+str(r[3])+"</td></tr>"
+        """+str(temp_str1)+"""
+</td> 
+<td class="xl65 " valign="middle"  style="padding-top:1.0px;padding-right:1.0px;padding-left:1.0px;color:#000000;font-size:13.3px;font-weight:normal;font-style:normal;text-decoration:none solid #000000;font-family:微软雅黑,sans-serif;border:1.0px solid #666666;background-image:none;background-position:.0% .0%;background-size:auto;background-attachment:scroll;background-origin:padding-box;background-clip:border-box;">
+ 
+        """+str(temp_str2)+"""
+
+</td></tr>"""
 	mail_str+="</tbody></table>"
 
 	cursor.close()
 	conn.close()
 	if len(rs)>0:
-		send_mail("[反作弊日常报告]存在异常账号-"+str((datetime.datetime.now()).strftime('%Y-%m-%d')),mail_str)
-	else 
-		send_mail("[反作弊日常报告]今日一切正常-"+str((datetime.datetime.now()).strftime('%Y-%m-%d')),"")
+		send_mail("[反作弊日常报告]存在异常账号-"+str((datetime.datetime.now()).strftime('%Y-%m-%d')),""+mail_str)
+	else:
+		send_mail("[反作弊日常报告]今日一切正常-"+str((datetime.datetime.now()).strftime('%Y-%m-%d')),"今日一切正常")
 if __name__ == '__main__':  
 	anti_spam()
